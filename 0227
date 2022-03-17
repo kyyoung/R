@@ -1,0 +1,314 @@
+#is.na의 활용
+v1 <- c(1,2,NA,3,4,NA,5,6)
+v2 <- c(1,2,NULL,3,4,NULL,5,6)
+sum(v1) #NA로 리턴
+sum(v2) #21로 출력 
+
+is.na(v1) #불리언 벡터, 논리값으로 사용 
+v1[is.na(v1)] <- 0 ; v1  #na 추출하고 0으로 치환  
+sum(v1)
+
+# 연산자 사용시 주의 (헷갈림) 
+c(T,T,T) & c(T,F,T) # 각 원소마다 연산 수행, &은 모든 원소를 체크 
+c(T,T,T) && c(T,F,T) # 첫번째 원소만 연산 수행, &&은 앞의 하나의 원소만 체크
+
+#예제) v3에서 7보다 크고 10보다 작은 값 출력 
+v3 <- 1:10  
+v3 >7
+v3 <10 
+
+(v3 >7) & (v3 <10) 
+(v3 >7) && (v3 <10)
+
+#[벡터형 연습문제] 
+#1. 2015/01/01 ~ 2015/01/31 일별 날짜 생성
+v_date <- seq(as.Date("2015/01/01"), as.Date("2015/01/31"), by =1); v_date
+
+#2. 감제외
+vec1 <-c('사과', '배', '감', '버섯', '고구마') 
+
+vec1n<-vec1 != '감' 
+
+vec1 [c ('사과', '배', '버섯', '고구마')] 
+
+#선생님 
+vec1[vec1 != '감']
+
+
+#3. 다음 수행
+vec1 <-c('봄', '여름', '가을', '겨울') 
+vec2 <-c('봄', '여름', '늦여름', '초가을')
+
+#1) vec1과 vec2를 합친 결과
+vec_c <-c(vec1, vec2); vec_c
+
+#선생님
+c(vec1, vec2)
+append(vec1,vec2)
+union(vec1,vec2)
+
+#2) vec1에 있는데 vec2에는 없는 결과
+vec1[!vec1 %in% vec2] ;
+setdiff(vec1,vec2)  
+setdiff(vec2, vec1) 
+#3) vec1과 vec2 둘다 있는 결과 
+vec1[vec1 %in% vec2] ;  
+intersect(vec1,vec2)
+
+#집합연산자
+t1 <-c('a','b','c','d')
+t2 <-c('a','e','f')
+t3 <-c('a','e','e','f')
+#1) 합집합 : union
+union(t1,t2) # 중복 제외 합집합 출력 
+
+#2) 교집합 : intersect
+intersect(t1,t2) 
+
+#3) 차집합 : setdiff
+setdiff(t1,t2) # 앞의 원소의 값이 표시됨 t1-t2 -> t1의 값만 표기 
+
+#4) 동등비교 : identical, setequal
+#-identical : 구성하는 원소, 크기가 모두 같은지 확인 
+#-setequal : 구성하는 원소가 같은지 확인(크기상관x)
+
+identical(t2,t3) #false 
+setequal(t2,t3) #true 
+
+#리스트
+# -층을 가지고 있는 구조 
+# -key-value 구조 
+# key 내부는 벡터로 구성, 동일한 데이터 타입만 가능 
+
+#1.생성
+
+l1 <- list('a'=1, 'b'=2, 'c'=3) ;l1 
+l2 <- list('a'=c(1,2), 'b'=c(2,3,4), 'c'=3) ;l2
+l2 <- list('a'=c(1,2), 'b'=c(2,3,4), 'c'='a') ;l2  #여러가지 형태의 데이터를 묶을 수 있음 
+
+#2. 색인 
+l2$a #numeric(vector)형태 
+l2['a'] #list 형태 
+l2[1] #1층 추출, 리스트로 리턴 
+l2[[1]] #1층 추출, 벡터로 리턴 
+l2[c('a', 'b')] 
+
+class(l2$a) #numeric(vector)형태 
+class(l2['a']) #list 형태 
+
+#3. 수정 
+l2$d <-c(1,5,7); l2 #key 생성 
+l2$d <- NULL;l2 #키 삭제 (키마다 다른 섹터이기 때문에 키 단독으로 수정 삭제 가능 )
+l2$b[3] <- 40 #리스트의 벡터형태일 때 수정 
+
+#[참고] 벡터의 원소에 NULL 할당 불가 
+v1[2] <- NULL #불가  
+#예제) l2의 'b'층에 있는 두번째 원소(3) 출력 
+l2$b[2]
+l2['b'][2] #불가, l2['b']대상의 두번째 층 출력요구하는 것임 하지만 b의 층은 1개 
+
+# [문제] 
+# 1-1.아래 벡터 생성 
+# name grade jumsu hakjum
+#  서재수  4      90   A0
+
+v1 <-c('name', 'grade', 'jumsu', 'hakjum')
+v2 <-c('서재수', 4, 90, 'A0')
+v3<-c(v1,v2)
+
+#선생님 
+v1 <- c('서재수','4','90','A0')
+names(v1) <- c('name','grade','jumsu','hakjum')
+
+#1-2. jumsu를 '성적'으로 변경 
+v3[3] <- '성적' 
+v3
+
+#선생님 
+names(v1)[3] <- '성적'
+names(v1)[names(v1)=='jumsu'] <- '성적'
+
+#2-1 아래 리스트를 생성
+# name grade jumsu hakjum
+# 서재수   4    90    A0
+# 서진수   3    80    B+
+# 홍길동   2    85    B+
+
+l1 <- list( 'a'=c('name', 'grade', 'jumsu', 'hakjum'), 'b' =c('서재수', 4, 90, ' A0'), 'c'=c('서진수', 3, 80, 'B+'), 'd'=c('홍길동', 2, 85, 'B+')) ; l1
+
+#2-2. 홍길동의 점수와 hakjum을 각각 95, A+로 변경
+l1$d <- c('홍길동', 4, 95, 'A+')
+l1$d[3] <-95 
+l1$d[4] <- 'A+' 
+#2-3. 서진수의 jumsu 삭제(삭제불가시 없는 데이터 처리) 
+l1$c[3] <- NULL 
+
+
+#선생님
+l3<- list(name =c('서재수', '서진수', '홍길동'), grade=c(4,3,2), jumsu =c(90,80,85), hakjum =c('A0', 'B+', 'B+'))
+l3
+
+l3$jumsu[3] <-95
+l3$hakjum[3]<-'A+'
+l3$jumsu[l3$name =='홍길동'] <-95
+l3$hakjum[l3$name == '홍길동'] <- 'A+' 
+
+l3$[l3$name=='서진수'] <- NULL #불가 length를 가지고 있지 않기 때문에 공간 차지가 안되어서
+l3$[l3$name=='서진수'] <- NA # 가능 빈 값이여도 length를 갖고 있기 때문에 공간이 차지됨 
+l3
+
+
+#matrix(숫자저장 혹은 연산용) 
+# 2차원 구조, 행과 열로 구성 
+# 동일한 데이터 타입만 허용 
+
+#1.생성
+matrix(data = 1:9, nrow = 3, ncol = 3, byrow = T, dimnames= ) 
+#     (maxtrix 구성데이터, 행의 수, 컬럼의 수,  로우 우선순위 여부, 행과 열의 이름) 
+matrix(data = 1:9, nrow = 3, ncol = 3, byrow = T)  #byrow = t이면 행먼저 채우기
+matrix(data = 1:9, nrow = 3, ncol = 3, byrow = F)  #byrow = f이면 렬먼저 채우기 (byrow는 FALSE가 디폴트값) 
+
+m1<-matrix(data = 1:9 , nrow = 3) 
+
+#2. 색인 행과 열 자리를 잘 맞추어 적기 
+m1
+m1[ ,1]  #열 
+m1[1, ]  #행 
+m1[1,1]
+m1[c(1,3),] 
+m1[,2:3] 
+
+#예제) 3번째 컬럼이 9이상인 행 선택 
+m1[m1[3,]>=9, ]
+m1[m1[3,]>=9 ] # , 가 없으면 행방향으로 색인함 
+
+#예제
+m1>5 #출력자체가 2차원
+m1[m1>5]  #2차원의 형식으로 색인을 할 수 있고, 2차원 형식으로 모양을 유지할 수 있음 
+
+#연습문제) 1부터 20값을 갖는 5x4행렬 생성 후 짝수값을 모두 0으로 수정하여라 
+
+m2 <-matrix(data = 1:20, nrow=5)
+m2 %% 2 == 0 #짝수 2로나눈 나머지가 0 
+m2[m2 %% 2 == 0  ] <-0
+m2 
+
+#3. 행, 컬럼 이름 수정 
+rownames(m1) <- 0:2 #행이름
+
+colnames(m1) <- c('a','b','c') #열이름 
+dimnames(m2) <- list(1:5, c('a','b','c','d')) #차원이기 때문에 list로 출력, 행과 열
+
+#[참고] : 색인시 주의사항
+#m1에서 2,3번째 행의 'b'컬럼 각각 50, 60 으로 수정 
+m1[c(2,3),'b'] #위치색인(숫자전달), ()의 값은 행렬의 위치값 
+m1[c('1','2'),'b'] #이름색인(문자전달) 
+rownames(m1) #기존에 부여한 0~2는 문자 이름으로 저장됨 
+m1
+
+m1[c(2,3),'b'] <-c(50,60)
+m1
+#4. 구조변경 
+rbind(m1,c(10,11,12)) #행 늘림
+m1
+cbind(m1,c(10,11,12)) #열 늘림
+
+#5. 연산 
+m3 <- matrix(1:4, nrow=2)
+m4 <- matrix(c(10,20,30,40), nrow=2)
+m5 <- matrix(1:6, nrow=2)
+
+m3 + m4 #크기가 같은 두 행렬 연산 가능
+m3 + m5 #크기가 다른 두 행렬 연산 불가능
+
+#참고 : 행렬의 곱(inner product)
+[x11 x12   [y1  [x11*y1+x12*y2
+         *    =
+ x21 x22]   y2] [x21*y1 + x22*y2]
+ (2*2)   *  (2*1) =(2*1)  
+
+
+#6. 크기확인  
+nrow(m1)   #3행 //행의 수
+ncol(m1)   #3열 //컬럼의 수
+dim(m1)    #3행 3열 //행, 컬럼 수가 벡터로 동시에 출력 
+
+dim(m2) <- c(4,5)
+m2
+
+#연습문제 pdf 89쪽 
+seasons <- matrix(data=1:4, nrow=2)
+seasons
+
+#1-1)
+seasons <- matrix(data=c('봄','여름','가을','겨울'), nrow=2)
+
+seasons[c(1,2),1] <- c('봄', '여름')
+seasons[c(1,2),2] <- c('가을','겨울')
+
+#선생님
+v1 <-c('봄','여름','가을','겨울') 
+matrix(v1,nrow=2)
+
+#1-2)
+seasons[c(1,2),1] <- c('봄', '가을')
+seasons[c(1,2),2] <- c('여름','겨울')
+seasons
+
+#선생님
+v1 <-c('봄','여름','가을','겨울') 
+matrix(v1,nrow=2, byrow=T)
+seasons[,2] #차원의 축소, 2차원에서 1차원 
+seasons[ ,2, drop = F] #차원을 축소 방지  
+
+#2)
+seasons[c(1,2),2]
+
+#3)
+seasons <- matrix(data=c('봄','여름','가을','겨울'), nrow=2)
+seasons2<- rbind(seasons,c('초봄','초가을')); seasons2
+
+#4) 
+seasons3<- cbind(seasons2,c('초여름','초겨울','한겨울')); seasons3
+
+#데이터프레임 
+#행과 열의 구조를 갖는 2차원 데이터 형식 
+#엑셀에서의 표  데이터베이스에서의 테이블과 유사 
+#key(컬럼)value 구조를 갖음 
+
+#1.생성 
+df1<-data.frame(name = c('smith', 'allen', 'scott'), sal=c(800,900,1000), deptno = c(10,20,30), stringsAsFactors=F) #stringAsFactors=F로 지정해서 문자를 그냥 character형으로 지정 
+#2.구조확인
+str(df1) #오라클에서 desc  
+#factor :문자(고정형)변수, 한번 factor로 지정된 문자형 변수는 수정이 되지 않기때문에 신중해야함 범주형 변수 상,중,하 // 남,녀
+#stringAsFactors = 문자를 factor로 해석하는 명령어
+nrow(df1) #행
+ncol(df1) #열 
+dim(df1)  #디맨션 
+
+#3.구조변경
+#1) 행추가 
+df1 <- rbind(df1, c('king', 2000, 10))  #추가 이후 숫자컬럼이 문자로 변환됨, 이유는 벡터는 서로다른 형은 취급하지 않은데, king이 문자 -> 2000, 10은 문자로 변환됨 
+str(df1)
+#sal과 deptno 컬럼을 숫자로 변경 
+df1$sal <- as.numeric(df1$sal)
+sum(df1$sal) 
+df1$deptno <- as.numeric(df1$deptno) 
+
+#[참고] : 위치값 지정을 통한 데이터 삽입 
+df1[5,1] <- 'hong'
+df1[5,2] <- 3000
+df1[5,3] <- 20
+
+#2)컬럼추가
+df1$comm <-c(100,0,NA,500,300) 
+
+df1 <- cbind(df1,c(7411, 7511, 7611, 7711, 9811))
+colnames(df1)[5] <- 'deptno' 
+
+df1 
+
+[연습문제] 
+getwd()
+setwd('C:\Users\KITCOOP\Documents\R\data')
+df1 <-read.csv('student.csv') 

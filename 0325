@@ -1,0 +1,160 @@
+#그래프 
+figure : 그래프를 그릴 공간(창) 
+dev.new() # 그래프를 그릴 공간 분리, figure 생성 
+plot(1:10) 
+
+plot(x축, y축, ...) #벡터형식이 들어가야함 데이터 프레임이 들어가면 오류 
+par(mfrow=c(1,3)) #figure 분리 (1행2열 형식) mfrow=c(행,열) 
+plot(c(1,2,7), c(1,2,3)) # (1,1), (2,2) ,(7,3)의 그래프 
+plot(c(1,2,3)) #x축은 자동으로 1,2,3 ... (1,1) (2,2) (3,3)의 그래프 
+plot(c(4,5,3)) #x축은 자동으로 1,2,3 ... (1,4) (2,5) (3,3)의 그래프 
+
+#[참고 - plot에 데이터프레임 전달시 교차 산점도 출력] 
+#col 
+#교차산점도 : 분류분석시 변수의 상관관계 초기 파악  
+plot( iris [, -5], col=iris$Species) 
+
+#1) type : 선모양 
+dev.new() 
+par(mfrow=c(1,2)) 
+plot(1:10, type = 'l') #선
+plot(1:10, type = 'o')  #o 모양 표시 
+
+#2) col : 선택 
+plot(1:10, type = 'l', col =2) # 색을 숫자로 표시
+plot(1:10, type = 'o', col ='red')  #색 이름으로 출력 
+#col에 컬럼이 들어가도 됨 
+
+#3) lty : 선의 모양 
+plot(1:10, type = 'l', col =2, lty=3) # 선모양을 점선으로
+plot(1:10, type = 'o', col ='red', lty='dashed')  #선모양이 대쉬선 
+
+#4) xlab, ylab : 축이름 
+plot( 1:10, xlab= 'x축이름', ylab='y축이름') 
+plot( 1:10, xlab= 'x축이름', ylab='y축이름', main = '그래프이름') 
+
+#5) xlim, ylim : 축범위 설정 값 설정 ***중요 
+plot( 1:10, xlim=c(1,10), ylim=c(1,5), xlab= 'x축이름', ylab='y축이름', main = '그래프이름') 
+plot(1:10, ylim=c(0,20)) 
+
+#6) axis 함수: 눈금 이름 변경 
+axis(숫자, at=, labels = ) 
+#axis(숫자 = 1이면 x축 눈금, 2이면 y축 눈금 설정, at=눈금을 표현하는 숫자 벡터, labels=각눈금에 부여하는 이름)
+
+plot(c(120, 150, 100), type ='o') 
+plot(c(120, 150, 100), type ='o', ylim=c(0,150), axes=F) #axes=F 그래프 눈금 표현 안함 
+axis(1, at= 1:3, labels = c('월','화','수')) #x축눈금 설정 
+axis(2, ylim=c(0,150)) #y축 눈금 설정 
+#눈금의 범위 변경은 plot에서 xlim, ylim을 사용해야 눈금 범위 변경이 됨 axis에서는 되지 않음 기존의 plot에서 lim값을 가져와서 그림 
+
+#예제- 다음의 데이터프레임에서 각 과일별 판매량 증감 추이를 선 그래프로 출력 
+df1 <- data.frame(apple=c(100,120,150), banana=c(120,150,140), mango=c(90,80,100))  
+rownames(df1) <- 2007: 2009
+
+
+plot(df1$apple, type = 'o', ylim=c(0,200), col=1, axes=F, ann = F ) #ann은 그래프 제목 출력하지 않겠다 옵션
+lines(df1$banana, type = 'o', col=2) 
+lines(df1$mango, type = 'o', col=3) 
+#첫번재 그래프의 범위에 따라 밑의 그래프가 그려지는 것이기 때문에 잘라짐, 따로 limt 설정해주거나 범위가 넓은 그래프를 먼저 그리기 
+
+#범위 표시 
+axis(1, at=1:3, labels = rownames(df1))
+axis(2, ylim=c(0,200))
+
+#그래프 다 그리고 나서 제목 만들기 : title
+title(main = '과일별 판매량 증감추이',col.main='blue', xlab='년도',cex.lab=2, ylab ='판매량',font.lab=4) 
+#col.main 타이틀 컬러, cex.lab x축, y축 크기, font.lab 폰트 종류 선택 
+
+#범례 표시 
+#legend (x축위치, y축위치, legend = , col =, lty=, fill= ) 
+#       (범례 x 시작 위치, 범례 y 끝 위치, 범례 표현 값, 각 범례 표현 색, 범례 선 스타일, 범례 채울 스타일) 
+# lty 선 그래프의 선 모양 전달, fill 막대그래프일 때 사용 
+legend(1, 200, colnames(df1), col = 1:3, lty=1) 
+#위치는 원래 그래프가 설정되어 있는 숫자를 입력해야함 2007,2008 등을 입력하면 안됨 
+
+#[연습문제] 
+#data.csv 파일에서 년도별 총 구직자수의 변화 추이 선 그래프 출력 
+#(각 년도별로 월별 구직자수의 변화를 확인할 수 있는...) 
+d1 <- read.csv('data.csv', stringsAsFactors = F) 
+library(stringr)
+d1$day<-str_c(d1$년도, d1$월, sep = '/') 
+
+plot(d1$총구직자수, type ='o', ylim=c(0,10000), axes=F, ann= F)
+axis(1, at=1:nrow(d1), labels = d1$day) 
+axis(2, ylim=c(0,10000))
+
+d1_1<-dcast(d1, 년도~월, value.var = '총구직자수') 
+colnames(d1_1) <-str_c(colnames(d1_1) , '월') 
+plot(d1_1$'1월', type ='o', ylim=c(0,10000), axes=F, ann= F)
+lines(d1_1$'2월', type = 'o', col=2) 
+lines(d1_1$'3월', type = 'o', col=3) 
+lines(d1_1$'4월', type = 'o', col=4) 
+lines(d1_1$'5월', type = 'o', col=5) 
+lines(d1_1$'6월', type = 'o', col=6) 
+lines(d1_1$'7월', type = 'o', col=7) 
+lines(d1_1$'8월', type = 'o', col=8) 
+lines(d1_1$'9월', type = 'o', col=9) 
+lines(d1_1$'10월', type = 'o', col=10) 
+lines(d1_1$'10월', type = 'o', col=11) 
+lines(d1_1$'10월', type = 'o', col=12) 
+axis(1, at=1:5, labels = c(2014,2015,2016,2017,2018))
+axis(2, ylim=c(0,10000))
+
+
+#선생님 
+setwd("C:/Users/KITCOOP/Documents/R/data")
+df1 <- read.csv('data.csv') 
+library(reshape2) 
+library(stringr)
+df2 <-dcast(df1, 월 ~ 년도) # 월이 고정 년도가 움직임 
+dev.new()
+plot(df2$'2014', type = 'o',ylim=c(0,15000), axes=F, ann= F, col =1) 
+lines(df2$'2015', type = 'o', col =2) 
+lines(df2$'2016', type = 'o', col =3) 
+lines(df2$'2017', type = 'o', col =4) 
+lines(df2$'2018', type = 'o', col =5) 
+axis(1, at=1:12, labels = str_c(1:12, '월')) 
+axis(2, ylim=c(0,15000))
+title(main = '년도별 총 구직자수 변화', col.main ='blue', cex.main=2, xlab ='월', ylab='구직자수') 
+
+legend(9, 15000, legend=(2014:2018), col = 1:3, lty=1) 
+
+df3 <- dcast(df1, 년도~월) 
+df3 [1,-1] #2014년 선택 데이터 프레임으로 출력 
+plot(df3[1,-1], type='o') #첫번째 행을 제외한 값을 선택해야 되는데 df3[1,-1]의 형태는 데이터 프레임이기 때문에 오류 
+
+class(as.vector(df3[1,-1])) #data.frame 형식을 유지, key형식이 유지되기 때문 
+
+as.vector(df3[1,-1])
+     1    2    3    4    5    6    7    8    9   10   11   12
+1 7228 8888 6917 8925 7592 6395 5184 9094 8738 5562 6870 8217
+class(unlist(df3[1,-1])) #unlist를 사용하여 벡터로 만들어줘야함, integer 출력 
+
+unlist(df3[1,-1])
+   1    2    3    4    5    6    7    8    9   10   11   12 
+7228 8888 6917 8925 7592 6395 5184 9094 8738 5562 6870 8217 
+
+
+plot(unlist(df3[1,-1]), type='o') #벡터로 변경 후 plot에 전달 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

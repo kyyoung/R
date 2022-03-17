@@ -1,0 +1,369 @@
+#if 연습문제 3. 두 숫자를 입력해서 첫 번째 숫자가 두 번째 숫자보다 클 경우 
+#첫 번째 숫자에서 두 번째 숫자를 뺀 값을 출력하고 두번째 숫자가 첫번째 숫자보다 클 경우 
+#두번째 숫자에서 첫번째 숫자를 뺀 값을 출력하는 함수 myf3( ) 을 작성 하세요
+
+myf3 <- function(x,y){
+if (x>=y) {
+ return(x-2)
+ } else if (y < x){
+ return(y-x)
+  }
+ }
+
+myf3_1 <- function(x,y){
+if (x>=y) {
+ return(x-2)
+ } else {
+ return(y-x)
+  }
+ }
+
+#if 연습문제 5. 사용자가 대문자 'Y’나 소문자‘y’를 입력하면 화면에‘Yes’를 출력하고 
+#그 외 다른 글자를 입력하면‘Not Yes’를 출력하는 사용자 정의 함수를 만드세요.
+
+myf4<-function(x){
+if (str_detect(x, '^[Yy]')) {
+  return('Yes') 
+  } else {
+  return ('Not Yes')
+  }
+ }
+ 
+myf4('Y')
+
+#선생님
+myf5<-function(x){
+if (x=='Y' | x=='y') {  #x %in% c('Y', 'y') 
+  return('Yes') 
+  } else {
+  return ('Not Yes')
+  }
+ }
+ 
+#연습문제-함수에 벡터가 대입되는 경우 
+#emp.csv 파일을 읽고
+#1.sal과 comm의 합을 구하는 함수 생성 및 적용, f_salcomm(emp$SAL, emp$COMM)형태
+#COMM이 NA인 경우 0으로 치환
+emp<-read.csv(file = "C:/Users/KITCOOP/Documents/R/data/emp.csv", header=T,  stringsAsFactors=FALSE)
+
+f_salcomm <-function(x, y) {
+  x<-emp$SAL 
+  y<-ifelse (is.na(emp$COMM),0,emp$COMM)
+  return(x+y) 
+  }
+ f_salcomm(emp$SAL, emp$COMM)
+ 
+ #선생님
+ f1<-function(x,y) { 
+   return(x+ifelse(is.na(y), 0,y))   #벡터연산을 방해하는 문법이 없으면 벡터 연산도 가능함  
+   }
+  f1(emp$SAL, emp$COMM)
+
+
+#2.부서번호에 따른 부서명 출력 함수 생성 및 적용, 10번이면 인사부, 20은 재무부, 30은 총무부
+
+ f_dname <-function(x) {
+   ifelse(x==10, '인사부', ifelse(x==20, '재무부', '총무부'))
+  }
+f_dname(emp$DEPTNO)
+
+#선생님 (if문 사용) 
+v_dname <- c() 
+for (i in emp$DEPTNO) {
+  if ( i == 10) {                   #if 문은 벡터 연산이 안됨 
+    v_dname <-c(v_dname, '인사부')
+	} else if ( i ==20) {
+	v_dname <-c(v_dname, '총무부') 
+	} else {
+	v_dname <-c(v_dname, '재무부')
+	}
+	}
+vname
+#선생님 사용자 정의 함수 
+sapply(list, function) 
+f2 <- function(x) { 
+  if ( x == 10) {                   #if 문은 벡터 연산이 안됨 
+     return('인사부')
+	} else if ( x ==20) {
+	 return('총무부') 
+	} else {
+	 return('재무부')
+	}
+}
+
+f2(10)
+f2(emp$DEPTNO)  #if 문을 for문 없이 썼기 때문에 x==10인 경우만 나옴, 즉 벡터 연산이 안됨 
+	
+#수정1- 적용함수 sapply 사용   
+f2 <- function(x) { 
+  if ( x == 10) {                   #if 문은 벡터 연산이 안됨 
+     return('인사부')
+	} else if ( x ==20) {
+	 return('총무부') 
+	} else {
+	 return('재무부')
+	}
+}	
+sapply(emp$DEPTNO, f2)	#sappy 문법은 for문의 역할을 함, 벡터연산 가능 
+
+#수정2- for문 형식 사용 
+
+f3 <- function(x) {
+  v_dname <- c() 
+  for ( i in x) { 
+  if ( i == 10) {                   
+    v_dname <-c(v_dname, '인사부')
+	} else if ( i ==20) {
+	v_dname <-c(v_dname, '총무부') 
+	} else {
+	v_dname <-c(v_dname, '재무부')
+	}
+ }
+ return(v_dname)
+}	
+
+f3(emp$DEPTNO)
+
+#연습문제 (ifelse 사용 안하고)
+f_nvl(NA,0)
+f_nvl(emp$COMM,0) 
+is.na(emp$COMM)  
+
+f_nvl <- function(x) {
+ if ( is.na(x) == T) {
+return(0) 
+} else {
+return(x) 
+} 
+sapply(emp$COMM, f_nvl)
+v1 <- c( 1, NA, 3, 5)
+sapply(v1, f_nvl)
+v2<-NA ; v2
+sapply(v2, f_nvl)
+
+#for문 
+f_nvl2 <- function(x, replacement) {
+  v_nvl<-c()
+  for ( i in x){
+  if(is.na(i)) {
+ v_nvl <- c(v_nvl, replacement)  
+ } else { 
+  v_nvl <- c(v_nvl, i)
+  }
+} 
+return(v_nvl)
+}
+
+f_nvl2(emp$COMM, 0)
+
+#선생님 
+f_nvl <- function(x, replacement) {
+ if(is.na(x)) {
+ return(replacement) 
+ } else { 
+  return(x)
+  }
+  }
+ f_nvl(NA,0)
+ sapply(emp$COMM, f_nvl, 0)
+ 
+#self(재귀함수) 
+#예제) fsum(100) 1+2+3+...+100 함수를 재귀함수로 생성
+ #1+2+3+4...+100
+ fsum <- function(x) {
+ for ( i in 1:x) {
+ vsum <- vsum + i 
+ }
+ return(vsum) 
+ }
+ fsum(100) 
+ #1+(1+1)+(1+2+3) 
+ #로직 
+ i
+ 1   1     =fsum(1)
+ 2   1+2   =fsum(2)  fsum(1)+2
+ 3   1+2+3 =fsum(3)  fsum(2)+3 
+ 
+ i 1+2+...= fsum(x) = fsum(x-1)+x  
+ fsum <- function(x) {
+  if(x==1) {
+  return(1) 
+  } else { 
+  return(fsum(x-1)+x)  
+  }
+ } 
+  fsum(3) 
+ #stop point는 fsum(1) fsum(1)이 식의 최초값이기 때문 
+ #stop point를 지정하지 않으면 fsum(0), fsum(-1)과 같이 값이 음수값을 갖게됨 
+ 
+
+ 
+ #연습문제-피보나치수열 
+ f(1) =1
+ f(2) =1         0+f(1)
+ f(3) =1+1 =2    f(1)+f(2) 
+ f(4)= 1+2 =3    f(2)+f(3) 
+ f(5)= 2+3       f(3)+f(4) 
+ 
+  fsum2 <- function(x) {
+  if(x==1) {
+  return(1) 
+  } else if(x==2){ 
+  return(1)  
+  } else {
+  return(fsum2(x-1)+fsum2(x-2))
+ } 
+ 
+}
+ 
+ fsum2(6)
+ 
+ #선생님
+ f_fibo <-function(x) {
+ if(x==1 | x==2) { 
+  return(1)
+ } else {
+   return(f_fibo(x-2) + f_fibo(x-1))
+   }
+   }
+ f_fibo(3)  
+ 
+ 
+ #가변형인자
+ f1 <-function(...) {    #...은 key value 
+    v_key <- list(...)   #내부에서 key value를 list 형식으로 만들어줌 
+    for ( i in v_key) {
+   ...	
+ }
+ } 
+ 
+ #연습문제 fsum3(1,10,100, ...) = 111
+
+ fsum3<-function(...) {
+   v_key <- list (...)
+   vsum2<-0
+   	for ( i in v_key) {
+	vsum2 <-  vsum2+i
+	}
+	return(vsum2)
+	}
+ fsum3(1,10,100)
+ 
+ #선생님 
+ fp3 <- function(...) {
+   v_key <- c(...)  # 리스트 대신 벡터 형식도 됨  c(...) 형태에 따라서 벡터도 가능 
+  for (i in ...) {
+   print (i)
+   }
+  }
+  fp3(1,2,3)
+
+fsum3 <- function(...) {
+   v_key <- list(...)  # 리스트 대신 벡터 형식도 됨  c(...) 형태에 따라서 벡터도 가능 
+   vsum <- 0
+  for (i in v_key) {
+   vsum <- vsum + i 
+   }
+   return(vsum) 
+  }
+  
+ #지역변수와 전역변수
+ #지역변수 : 특정함수, 프로그램 내에서 유효한 변수 
+ #전역변수 : 특정함수, 프로그램 밖에서도 유효한 변수 
+ 
+ #예시 
+# 전역변수(해당 세션에서)  
+ v1 <- 1 
+ f1 <- function(x) {
+  return(v1) # v1이 전역변수이기 때문에 f1 안에서도 v1의 값은 1    
+  }
+ f1()   #1
+ 
+ #------ 
+ #****좁은 범위의 지역변수가 더 우선수행됨 ****
+ v1 <-10 # 전역변수 (해당 세션에서)
+ f2 <-function(x) {
+  v1 <-5 # 지역변수(지역변수가 우선순위) 
+  return(v1) 
+  }
+ f2() #5 : v1<-5라는 지역변수가 우선순위를 갖기 때문에 f2()의 값은 5  
+ v1 #10 
+ 
+ #------
+ f3 <- function(x) {
+ vv1 <- 1
+ return(vv1)
+ }
+
+ 
+ f4 <- function(x) {
+ return(vv1)
+ }
+ 
+ f3() #1, f3에서 선언된 vv1이 실행됨 
+ f4() #vv1 not found error f3에서 선언된 vv1변수는 지역변수이기 때문에 다른함수 혹은 외부에서는 쓸 수 없음 
+ vv1 # 객체 vv1을 찾을 수 없음 
+ 
+ f3 <- function(x) {
+ vv2 <<- 1   # << 표시는 지역변수를 전역변수로 변환시켜줌 
+ return(vv2)
+ }
+ 
+ f4 <- function(x) {
+ return(vv2)
+ }
+ f3(vv2) #1
+ f4(vv2) #1 
+ vv2 #1
+ 
+ f_test <-function(x) {
+ vsum5 <- sum(1:x)
+ return(vsum5) 
+ }
+ vsum5  #밖에서 쓸 수 없음, return의 값을 보이는 임시 변수임 (지역변수)   
+ f_test(100) 
+ 
+ # 아이리스 데이터 : 데이터 분석 연습용으로 많이씀 
+ # 데이터 분석
+ # 지도학습 : Y(target) 존재 : Y값 예측  
+ 
+ # 1) 회귀기반 분석 : Y가 연속형 (OLS) 
+ # 예시
+ # 고객아이디, 성별, 나이, 게입시간, kill수, ... , 탈퇴여부
+ # 탈퇴여부(Y : 종속변수), 나머지 변수 : (x : 설명변수)  
+
+ # 2) 분류기반 분석 : Y가 범주형 (로짓 혹은 프로빗) 
+ 
+ 
+ # 비지도학습 : 기초통계
+ #예시 
+ # 고객아이디, 성별, 나이, 게입시간, kill수, 
+ # 예측값이 아닌 데이터 기초통계값 뽑아내기 
+ 
+ head(iris)
+ 
+ iris #데이터 로딩 필요없음 
+ mtcars #데이터 로딩 필요없음
+ 
+ # 파일 입출력 함수
+ # 1. read.csv 
+
+ read.csv(file, header = TRUE, sep = ",", quote = "\"",
+         dec = ".", fill = TRUE, comment.char = "", ...)
+#- header = FALSE :  첫번째 행을 컬럼화할지 여부
+read.csv('read_test1.txt', skip =1, sep = ':', header = T) # header = T 기본값 첫 행이 컬럼임
+read.table('read_test1.txt', skip =1, sep = ':', header = F) #header = F 기본값 첫 행이 컬럼이 아님  
+
+#- sep = "" : 파일의 분리 구분 기호
+read.csv('read_test1.txt', skip=1, sep =":") # : 사라짐 1 2 3 4
+read.csv('read_test1.txt', skip=1) # 1:2:3:4
+#- na.strings = "NA" : NA 처리할 문자열
+#- nrows = -1 : 불러올 행의 개수 
+#- skip =0 : 스킵할 행의 개수 
+read.csv('read_test1.txt', skip=1) # 첫 행 스킵 
+read.csv('read_test1.txt') # 첫행인  X.read.csv.test.file. 나타남 
+#- stringsAsFactors = T :  문자형 컬럼의 factor 선언 여부
+#- encoding = "unknown" : 파일 인코딩 
+
+getwd()
+setwd("C:/Users/KITCOOP/Documents/R/data")

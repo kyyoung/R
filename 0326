@@ -1,0 +1,114 @@
+#subway2.csv파일의 데이터를 기반으로 
+#승차가 가장 많은 top5개의 역을 구하고
+#각 역의 시간대별 승차의 증감추세를 도표화
+#참고: data.frame 형태로는 그래프 표현 불가, 컬럼형태로 변경 
+
+sub <- read.csv('subway2.csv', skip=1, stringsAsFactors=F, na.strings= '') 
+
+library(stringr)
+f1 <- function(x) { 
+as.numeric(str_remove_all(x, ','))
+}
+
+sub[,-(1:2)]<-apply(sub[,-(1:2)], c(1,2), f1) 
+
+library(zoo) 
+sub$전체 <- na.locf(sub$전체) 
+
+library(reshape2) 
+library(plyr) 
+
+sub1_1 <-sub[sub$구분 =='승차', ] 
+sub2 <- melt(sub1_1, id.vars =c('전체', '구분'))
+str(sub2) 
+sub3<-ddply(sub2, .(전체), summarise, value=sum(value))
+sub4<-sub3[order(sub3$value, decreasing=T), ]
+
+sub4<-sub4[1:5,] #승차가 가장 많은 top 5 역 강변, 잠실, 삼성, 강남, 신림 
+sub5<-merge(sub2, sub4, by = '전체') #승차가 가장 많은 top5의 시간대 
+dcast(sub5, 전체 ~ variable.x, value.var='value.x')
+sub6<-dcast(sub5, variable~전체, value.var='value.x') #그래프에 담길 컬럼이 ~ 뒤에 오는 것 
+str(sub6) 
+dev.new()
+plot(sub6$'강 남', type = 'o' ,ylim=c(0,400000), axes=F, ann= F, col =1) 
+lines(sub6$'잠 실', type = 'o' ,ylim=c(0,400000),  col =2) 
+lines(sub6$'삼 성', type = 'o' ,ylim=c(0,400000),  col =3) 
+lines(sub6$'강 변', type = 'o' ,ylim=c(0,400000), col =4) 
+lines(sub6$'신 림', type = 'o' ,ylim=c(0,400000), col =5) 
+axis(1, at=1:20, labels = str_c(5:24, '시')) 
+axis(2, ylim=c(0,400000))
+title(main = '승차가 많은 top 5역 승차 증감 추이', col.main ='blue', cex.main=2, xlab ='시간대', ylab='승차량') 
+
+legend(1, 400000, legend=(c('강남', '삼성', '신림', '강변')), col = 1:5, lty=1) 
+
+##토탈의 최대값임!!! 다시 해보기 
+
+#선생님 
+sub2<-sub[sub$구분=='승차' , -2]
+rownames(sub2) <- sub2$전체 
+sub2$전체 <- NULL 
+
+f1 <- function(x) { 
+as.numeric(str_remove_all(x, ','))
+}
+
+#top 5 역
+sub2[,] <-apply(sub2, c(1,2), f1)
+v_sort <- sort(apply(sub2, 1, sum), decreasing = T)[1:5]  
+names(v_sort) 
+
+#top 5역 시간대 
+total<-t(sub2[rownames(sub2) %in% names(v_sort), ])  
+rownames(total) <-as.numeric(substr(rownames(total), 2, 3))
+
+dev.new()
+plot(total[,1]/10000, type = 'o' ,ylim=c(0,40), axes=F, ann= F, col =1) 
+lines(total[,2]/10000, type = 'o' ,ylim=c(0,40), col =2) 
+lines(total[,3]/10000, type = 'o' ,ylim=c(0,40), col =3) 
+lines(total[,4]/10000, type = 'o' ,ylim=c(0,40), col =4) 
+lines(total[,5]/10000, type = 'o' ,ylim=c(0,40), col =5) 
+
+axis(2, ylim=c(0,40))
+axis(1, at =1:nrow(total), labels=rownames(total)) 
+title(main = '역별 승차 추이', col.main ='blue', cex.main=2, xlab ='시간', ylab='승차수(만)') 
+
+legend(18, 40, legend=(colnames(total), col = 1:5, lty=1, cex=0.8) 
+
+#막대그래프 그리기
+barplot(height = , ...) # height = 벡터 또는 2차원 데이터( matrix 형태), ...은 기타 옵션 
+
+#예제- 아래 데이터 프레임 막대그래프 그리기 
+library(googleVis)
+df1 <- dcast(Fruits, Year ~ Fruit, value.var = 'Sales') 
+rownames(df1) <- df1$Year
+df1$Year <- NULL 
+
+dev.new()
+barplot(df1) #height는 반드시 벡터 또는 행렬이어야 함  에러 
+barplot(as.matrix(df1)) #컬럼별 서로 다른 막대 그룹 생성, 그래프 stack됨 
+barplot(as.matrix(df1), beside = T, col=rainbow(3), ylim=c(0,200)) #컬럼별 서로다른 막대그룹 생성, 그래프가 옆에 붙음 , col=rainbow 는 무지개 색 
+barplot(as.matrix(df1), beside = T, col=c(1,2,3), ylim=c(0,200)) #c(1,2,3)으로도 색 지정 가능 
+
+legend(10,200, rownames(df1), fill = rainbow(3)) #fill이 주석의 사각형 색 나타내기 때문에 barplot의 색과 똑같이 이정해야 그래프의 값이 반영됨 
+
+
+#연습문제 
+#상반기 사원별 월별 실적현황_new.csv 읽고, 월별 각 직원의 성취도를 비교하기 위한 막대 그래프를 출력 
+# 1월달 -사람, 2월달- 사람 이런식으로 
+emp <- read.csv('상반기사원별월별실적현황_new.csv', stringsAsFactors = F) 
+emp2<-dcast(emp, 이름~월, value.var='성취도') #그래프에 담길 컬럼이 ~ 뒤에 오는 것 
+rownames(emp2) <- emp2$이름
+emp2$이름 <- NULL
+
+dev.new()
+barplot(as.matrix(emp2), beside = T, col=rainbow(7), ylim=c(0,2))
+legend(1,2, rownames(emp2), fill = rainbow(7))
+
+#선생님 
+df2<- read.csv('상반기사원별월별실적현황_new.csv', stringsAsFactors = F) 
+total2 <- dcast(df2, 이름 ~월) 
+rownames(total2) <- total2$이름 
+total2$이름 <- NULL
+dev.new() 
+barplot(as.matrix(total2),beside=T, col = rainbow(nrow(total2)), ylim = c(0,1.5), angle= 45, density=30, legend=rownames(total2), args.legend= list(cex=0.7, x='topleft')) #angle 빗금, density angle에서 설정한 빗금 두깨, args.legend = legend 형태 변환 옵션(위치, 상자 크기 등등)  
+  

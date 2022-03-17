@@ -1,0 +1,266 @@
+#path 설정
+제어판 > 시스템 및 보안 > 시스템 > 고급시스템설정 > 시스템변수 > path 편집 > 기존에 32bit 오라클을 맨 위의 위치로 옮기기 서버용을 클라이언트용보다 상위에 배치해야함 
+서버용이 위에 있어야 db에 접속할 수 있음 클라이언트용에는 db가 없음 
+server용 sqlplus.exe 
+client용 sqlplus.exe
+
+cmd > sqlplus > sqlplus.exe 실행 
+
+#cmd창에서 R이 실행되게 하는 방법
+R.exe이 설치되어 있는 위치를 제어판 > 시스템 및 보안 > 시스템 > 고급시스템설정 > 시스템변수 > path 편집에 새로 만들기 
+R.exe가 저장되어 있는 위치 C:\Program Files\R\R-3.6.1\bin
+
+#적용함수 : 반복연산을 도와주는 함수 
+1. apply(x, MARGIN, FUN, ...)  #데이터이외의 추가적 인자는 ... 에 입력 
+#x에는 1차원(벡터) 데이터가 올 수 없음(2차원 이상 적용가능)
+#주로 행별, 열별 반복연산을 연산하기 위한 함수 , 원소별 적용은 파이썬에서 불가 
+#R에서는 2차원 데이터의 '원소별' 적용도 가능
+#출력결과는 벡터, 리스트, 행렬, 배열
+#데이터 프레임 출력 불가 
+
+#예제 iris 데이터에서 각 컬럼별 평균 구하기 
+
+iris 
+str(iris)
+apply(iris[,-5],2,mean) #-5에 위치한 컬럼은 문자열이기 때문에 sum 안됨, 컬럼별 평균
+apply(iris[,-5],1,mean) #행별평균
+
+#예제 다음의 벡터에 천단위 구분기호 제거(적용함수 사용)  
+v1 <- c( '1,100', '2,200') 
+apply(v1,c(1,2), str_replace_all , ',', '')  # dim(X)는 반드시 양의 값을 가지는 길이를 가져야함, 1차원데이터이기 때문에 적용이 불가, 벡터적용 불가  
+sapply( v1, str_replace_all, ',' , '') #벡터적용 가능 
+
+#아주가끔유용 : apply 적용 결과를 원본 데이터 프레임에 전달하는 방법ㅂ 
+df1 <- data.frame ( a=c('1,000', '2,000'), b=c('3,000', '4,000'), stringsAsFactors = F)  
+rownames(df1) <-c('A','B') 
+class(apply(df1, c(1,2), str_remove_all, ',')) # "matrix"형식 
+df1[,] <- apply(df1, c(1,2), str_remove_all, ',') #"data.frame"형식  [,]는 전체 values 만 선택한 것 
+class(df1)
+
+
+2. lapply(list, FUN, ...)
+#원소별 적용 가능
+#출력결과 주로 리스트 
+lapply(df1, str_remove_all, ',') #출력결과는 list 
+
+3. sapply(list, FUN, ...)
+#주로 벡터의 원소별 함수 적용 가능, 2차원 적용가능(2차원일땐 matrix)  
+#출력결과 주로 벡터 
+#함수의 추가적 인자 전달 가능 
+sapply(df1, str_remove_all, ',') # 출력결과는 matrix 
+class(sapply(df1, str_remove_all, ','))
+
+4. tapply(vector, index, function) #vector : 연산대상, index : group by 컬럼, function : 적용함수 
+#oracle group by 기능과 비슷
+#그룹 컬럼을 index에 전달
+#출력결과 주로 벡터 
+tapply(iris$Sepal.Length, iris$Species, mean) #벡터 연산 가능 
+tapply(iris$Sepal.Length, iris$Species=='setosa', mean) #조건별 연산을 수행 가능 
+class(iris$Sepal.Length) #벡터 numeric 
+iris$Sepal.Length
+
+iris
+
+tapply(iris[,-1], iris$Species, mean) #2차원 적용 불가 , 데이터 프레임이기 때문에 적용 불가
+class(iris[,-1]) #데이터 프레임 
+
+#연습문제
+#emp.csv 파일을 읽고 
+#1)부서별 평균연봉
+emp <- read.csv('emp.csv', stringsAsFactors = F) 
+str(emp)
+
+tapply(emp$SAL,emp$DEPTNO, mean) 
+
+#2) 상/하반기 입사자의 평균연봉
+
+library(lubridate)
+emp$m1<-month(emp$HIREDATE)
+emp
+tapply(emp$SAL, emp$m1<=6, mean) 
+
+emp$m1 <= 6
+
+#선생님 
+#1) tapply (emp$SAL, emp$DEPTNO, mean)
+#2) as.numeric(substr(emp$HIREDATE, 6,7)) <7 
+tapply(emp$SAL, as.numeric(substr(emp$HIREDATE, 6,7)) <7 , mean) 
+
+5. mapply(function, ...)
+mapply(str_remove_all, df1, ',') #... 은 함수 인자 명령어 순서대로 입력하면 됨 
+sapply(df1, str_remove_all, ',') #mapply와 순서가 다름 주의*
+
+#연습문제
+#2000~2013년_연령별실업률_40~49세.csv 파일을 읽고, 2005~2009년에 대해 각 월별 , 연도별 실업률 평균
+#단, 연도 선택은 연도만 사용하여 표현 예) year >= 2005 
+getwd()
+setwd("C:/Users/KITCOOP/Documents/R/data")
+
+une<-read.csv('2000-2013년_연령별실업율_40-49세.csv', stringsAsFactors = F)
+une
+str(une)
+apply(une[6:10,-1],1,mean) #월별
+apply(une[,7:11],2,mean) #연도별 
+apply(une2[ , ],2, sum) 
+
+
+
+
+#선생님
+#컬럼 이름 변경
+colnames(une)[-1] <-substr(colnames(une)[-1],2,5)
+
+v2 <- c('x1월', 'x12월') 
+str_remove_all(v2, '[X월]') #[]는 또는의 의미 x or 월 
+colnames(une)[-1] <- str_remove_all(colnames(une)[-1], '[X월]') 
+une
+
+# 연도별 평균
+apply(une[, -1],2,mean, na.rm=T) #na.rm na를 제외한 나머지 평균 
+
+# 월별 평균 
+apply(une[ ,-1],1,mean) #월별
+
+
+#적용함수 비교
+#1차원 데이터 적용 시 
+apply : 불가
+sapply, lapply, mapply 가능
+
+#2차원 데이터 원소별 적용시
+df3 <- data.frame(a=1:5, b=6:10)
+
+f1 <- function(x) {
+  return(x+10)
+  }
+  
+f2 <- function(x) {
+  if (x<=5) {
+  return(x+10)
+  } else {
+  return(x*20) 
+  }
+  }
+  
+apply(df3, c(1,2), f1)  #matrix 
+sapply (df3,f1) #matrix
+lapply (df3,f1) #list 
+mapply (f1, df3) #matrix
+
+#2차원 데이터는 apply 사용해야함!!! 
+apply(df3, c(1,2), f2)  #matrix , 원소별 적용(1:1 치환) 
+#f2의 리턴값이 벡터값이 아님(for문), 아래의 명령어는 리턴값이 벡터값이어야함  
+sapply (df3,f2) # 오류발생 length > 1 이라는 조건이 있고, 첫번째 요소만이 사용될 것입니다, 명확한 원소별 적용이 아니라 key별 적용하기 때문  
+lapply (df3,f2) # 오류발생 length > 1 이라는 조건이 있고, 첫번째 요소만이 사용될 것입니다, 명확한 원소별 적용이 아니라 key별 적용하기 때문  
+mapply (f2, df3) # 오류발생  length > #1 이라는 조건이 있고, 첫번째 요소만이 사용될 것입니다, 명확한 원소별 적용이 아니라 key별 적용하기 때문  
+
+#연습문제
+#apply_test.csv 파일 읽고, 부서별 판매량의 총 합을 구하세요
+#각 셀이 - 인 경우 0으로 치환 후 계산, 
+#치환함수의 적용으로 풀이 
+ap_1<-read.csv('apply_test.csv', stringsAsFactors=F) 
+str(ap_1) 
+ap_1
+colnames(ap_1)[-1] <- str_remove_all(colnames(une)[-1], '[X]') 
+
+deptno <- c()
+for ( i in 1:5) {
+deptno <-c(deptno, str_split(ap_1$deptno.name, '-') [[i]] [1] )
+}
+
+ap_1$dept <- deptno
+
+ap_2<-data.frame(apply(ap_1[,2:5],2, str_replace_all ,'-', '0'), stringsAsFactors =F)
+ap_2$dept <- deptno
+
+ap_3[,]<-apply(ap_2, c(1,2), as.numeric) 
+
+str(ap_3)
+
+ap_3<-cbind(ap_3, total = apply(ap_3[,1:4],1,sum, na.rm=T))
+ap_3 <- data.frame(ap_3) 
+class(ap_3)
+tapply(ap_3$total, ap_3$dept, sum)
+
+#선생님
+df1<- read.csv('apply_test.csv', stringsAsFactors=F) 
+#step1) NA 치환 
+ifelse( is.na(df1), 0, df1) #ifelse는 벡터 치환 가능
+str_replace_all(df1, '-', '0') #벡터치환 가능 
+#2차원 가능한 데이터 적용 함수 
+
+f1 <- function(x) {
+if (is.na(x) | x == '-') {
+ return(0)
+ } else {
+ return(x) 
+ }
+ }
+ 
+ df1[,]<-apply(df1, c(1,2), f1) #2차원의 원소별 적용 가능 [,] 데이터 프레임 형식 유지 
+ sapply(df1, f1) #2차원의 원소별 적용 불가, df1의 key value별 전달 , 이유는 f1의 함수가 벡터를 적용을 할 수 없기 때문  
+ 
+ #step2) 부서별 총합
+ as.numeric(df1[,-1]) #2차원 적용 불가 
+ df1[,-1]<-sapply(df1[,-1], as.numeric) #as.numeric이 벡터를 적용할 수 있기 때문에(key 별로 적용가능) sapply에서 2차원 데이터셋 적용됨 
+ str(df1) 
+ df1$total<-apply(df1[,-1],1,sum)
+df1 
+
+ #step3) 부서번호 추출
+ 
+ f2 <- function(x) {
+ str_split(x, '-') [[1]] [1] 
+ }
+ 
+ df1$deptno <- sapply(df1$deptno.name, f2)
+ df1 
+ 
+ #step4) 부서별 총합
+ tapply(df1$total, df1$deptno, sum) 
+
+ #1. data.frame의 첫 번째 컬럼을 벡터형식으로 function에 전달 
+ #2. function이 벡터를 전달받아 벡터를 리턴하면 수행 가능, 벡터를 전달받아 벡터연산 불가하면 수행 불가 
+  
+ ex) 
+ f3 <- function(x) {
+   if (x < 1.1) {
+     return(1) 
+	 } else {
+	 return(2)
+	 }
+	} 
+	
+ sapply(iris[,-5],sum) #가능 key끼리 묶어서 전달이 되는 함수 
+ sapply(iris[,-5],f3)  #불가능 key끼리 묶어서 전달이 안되는 함수 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+

@@ -1,0 +1,176 @@
+#3.hist : 히스토그램 
+hist(x, breaks = "Sturges", include.lowest =T, right = T) 
+hist(벡터, 막대별 범위, 최소값 포함여부, 오른쪽 닫힘 여부(디폴트값))  
+
+#범위 표현 시 닫힘의 여부 
+160 < x <=165 (오른쪽이 닫힘) --> 범위 포함 방식 ( , ]  
+160 <= x <165 (왼쪽이 닫힘)  --> 범위 포함 방식 [,  )
+
+이하, 이상은 [] 미만 초과는 ()
+
+160 < x <=165  
+right = T = > (, ] 160초과 165 이하
+
+# include.lowest : 최소값 포함 여부 
+# right = T 옵션일 경우 최소값 범위는 포함되지 않기 때문에 자동 포함되도록 하는 옵션 
+v1 <- c(160, 171,172,181, 182) 
+hist(v1, c(160,170,180,190))  # 160초과 170미만의 값이 없지만 include.lowest = T 가 디폴트, 최소값인 160이 포함됨 
+
+#예제) student.csv 파일을 읽고 키에 대한 히스토그램 출력 
+setwd("C:/Users/KITCOOP/Documents/R/data")
+std <- read.csv('student.csv', stringsAsFactors = F) 
+
+dev.new()
+par(mfrow=c(1,2)) 
+hist(std$HEIGHT) 
+hist(std$HEIGHT, breaks=c(160,170,180,190) ) #10단위로 쪼개서 보고 싶음 
+
+#연습문제 
+#영화이용현황.csv 파일을 읽고 
+m1 <- read.csv('영화이용현황.csv', stringsAsFactors=F)
+# 1) 20세 미만, 20대, 30대, 40대, 50대, 60세이상 별 이용비율의 평균 
+
+str(m1) 
+v1 <- m1[m1$연령대 <30, c(8,9)] 
+v1 <- m1[m1$연령대 <20, ] 
+v2 <- m1[m1$연령대>=20&m1$연령대 <30, 9 ] 
+
+f1 <- function(x) {
+if (x>=10&x<20) {
+ return('20세미만') 
+ } else if (x>=20&x<30){
+ return('20대') 
+ } else if (x>=30&x<40){
+  return('30대') 
+ } else if (x>=40&x<50){
+  return('40대') 
+  } else if (x>=50&x<60){
+  return('50대') 
+  } else {
+  return('60세이상') 
+  }
+  } 
+ 
+f1(20) 
+
+m1$age<-sapply(m1$연령대, f1) 
+
+library(plyr) 
+ddply(m1, .(age), summarise, agv=mean(이용_비율...))
+
+#선생님 
+df1 <- read.csv('영화이용현황.csv', stringsAsFactors=F)
+
+df1$age<-ifelse(df1$연령대 < 20, '20세미만', ifelse((df1$연령대)<30, '20대', ifelse((df1$연령대)<40, '30대', ifelse((df1$연령대<50), '40대', ifelse((df1$연령대 <60), '50대', '60대이상')))))
+
+unique(df1$age)
+
+library(stringr) 
+v1<-paste(substr(df1$연령대, 1, 1), '0대', sep='')  #str_c와 같은 기능 sep = '  '가 디폴트라서 sep 다시 설정 
+str_c(substr(df1$연령대, 1, 1), '0대')  
+
+v1 <- str_replace_all(v1, '10대', '20세이하') 
+v1 <-str_replace_all(v1, '60대', '60세이상')
+v1 <-str_replace_all(v1, '70대', '60세이상')
+
+unique(v1) #v1에서 유일한 값 하나씩 출력 
+ddply(df1, .(age), summarise, v1=mean(이용_비율...))[c(2,1,3,4,5,6), ] 
+# 2) 각 지역.시도별 이용률이 가장 높은 연령대 출력 
+#(연령대 : 20세 미만, 20대, 30대, 40대, 50대, 60세이상) 
+
+m1_1 <- ddply(m1, .(지역.시도), subset, 이용_비율...==max(이용_비율...))
+m1_1[ , c(4,9)]
+
+#선생님 이용률이 가장 높은 연령대를 구할 때와 같은 문제 >> 어떤 카테고리의 합을 먼저 구하고 그것의 최대, 최소값을 구하는 것!!!! 주의
+df2 <- ddply(df1,.(지역.시도), summarise, v1=sum(이용_비율...))
+ddply(df2, .(지역.시도), subset, v1==max(v1)) 
+
+#3) 지역.시도별 성별 이용비율의 평균을 비교하기 위한 막대 그래프 출력 
+library(reshape2) 
+m2<-ddply(m1, .(지역.시도,성별 ), summarise, agv=mean(이용_비율...))
+m3<-dcast(m2, 지역.시도~성별) 
+
+rownames(m3) <- m3$지역.시도
+m3$지역.시도<- NULL
+ 
+dev.new()
+barplot(as.matrix(m3), beside=T, col=rainbow(17), ylim=c(0,0.004))
+legend(1,0.004, rownames(m3), fill=rainbow(17))
+
+#선생님 
+df3 <- dcast(df1,  성별~지역.시도, sum, value.var='이용_비율...') 
+dcast(df1,  성별~지역.시도, mean, value.var='이용_비율...') 
+
+rownames(df3) <- df3$성별 
+df3$성별 <- NULL
+
+dev.new()
+barplot(as.matrix(df3), beside=T, col=c(2,3), angle=c(0,90), density=c(70,30), ylim=c(0,20),legend=rownames(df3), las=2, args.legend= list(cex=0.7, x='topleft')) #las는 축눈금의 출력방향을 다 보 일 수 있게 ( 1:가로, 2: 세로), axis 함수에서도 사용 가능 
+legend(1,20, rownames(df3), fill=c(2,3))
+
+#팔레트 생성 : 조건별 막대의 색 다르게 표현 
+v1 <- c(99,81,40,60,89,20) 
+#80이상일때 빨강, 50~80 노랑, 50미만 녹색 
+v_color <-c() 
+for ( i in v1) {
+if ( i < 50 ) {
+  v_color <- c(v_color, 'green')
+  } else if ( i < 80) {
+  v_color <- c(v_color, 'yellow')
+  } else {
+  v_color <- c(v_color, 'red')
+  }
+ }
+
+barplot(v1, col=v_color, names.arg = c('월', '화', '수', '목', '금', '주말')) 
+#names.arg 막대 이름 붙이는 옵션 
+
+#[참고- hist 함수 옵션 사용, bar plot과 같음) 
+hist(std$HEIGHT, col =2:6, angle=c(0,10,20,30,40,50), density=30, border=1)
+#border 테두리 색 변경옵션  
+
+
+#4. pie 차트
+pie(x, labels = , radius = , clockwise = , init.angle = , col = )
+#pie(벡터, pie이름, pie크기, pie방향(시계방향여부, 시계반대방향이 디폴트), pie시작위치, 각 pie 색) 
+
+v1 <-c(1,2,3,5) 
+dev.new()
+pie(v1) #시계반대방향
+
+pie(v1, c('월', '화', '수', '목'), clockwise=T, init.angle=90) #시계방향 , 시작방향 바꿈
+
+install.packages('plotrix') 
+library(plotrix)
+pie3D(x=, radius=, labels= , labelcol = ,labelcex= , explode= )  
+#pie3D(벡터, 파이크기, 각 파이 이름, 라벨색, 라벨글자크기, 파이간 간격) 
+pie3D(v1, labels=c('월', '화', '수', '목'), explode=0.1) 
+
+#연습문제 
+#movie 데이터를 사용하여 성별 이용률 현황을 pie 차트로 비교 
+#서울시, 경기도 , 인천광역시 
+mnew<-ddply(m1, .(성별, 지역.시도) , summarise, total=sum(이용_비율...))
+m_seoul <- mnew[mnew$지역.시도=='서울특별시', ]
+m_g <- mnew[mnew$지역.시도=='경기도', ]
+m_i <- mnew[mnew$지역.시도=='인천광역시', ]
+lab1 <- str_c(m_seoul$성별 ,m_seoul$total, '%')
+lab2 <- str_c(m_g$성별 ,m_g$total, '%')
+lab3 <- str_c(m_i$성별 ,m_i$total, '%')
+
+dev.new()
+par(mfrow=c(1,3)) 
+pie(m_seoul$total, lab1, col=c(2,3))
+pie(m_g$total, lab2, col=c(2,3))
+pie(m_i$total, lab3, col=c(2,3))
+
+#선생님 
+total <- dcast(df1,  성별~지역.시도,  value.var='이용_비율...') 
+
+dev.new() 
+par(mfrow=c(1,3))
+pie3D(total$서울특별시, col=rainbow(2), main='서울특별시', col.main='blue', cex.main=3, theta=0.2, labels = c ('49%', '51%')) #theta= 원의 회전 각도, 값이 클수록 2차원 형식, 
+pie3D(total$경기도, col=rainbow(2), main='경기도', col.main='blue', cex.main=3) 
+text(0,1.2, 'abcd') #그래프 여백에 'abcd'값 작성됨, 부제목 작성할 때 사용함  
+pie3D(total$인천광역시, col=rainbow(2), main='인천광역시', col.main='blue', cex.main=3) 
+legend(0.5,1,total$성별, fill=rainbow(2), cex=1.5) #레전드는 각각 그리는 것이 아닌 여러개 그리면 한개 그리기 
+text(0,, 'abcd') #마지막 그래프에 'abcd'값 작성됨 

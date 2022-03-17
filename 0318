@@ -1,0 +1,283 @@
+getwd()
+setwd("C:/Users/KITCOOP/Documents/R/data")
+df1 <- read.csv("apply_test2.csv", stringsAsFactors = F)
+str(df1)
+rownames(df1) <- df1$name
+df1$name <- NULL
+
+#0. 각 문자열 공백 제거 
+str_trim( ' 1234 ')  #공백제거 함수 
+str_trim(df1) #차원유지가 안됨
+df1[,] <- apply(df1, c(1,2), str_trim)  #차원유지됨 
+
+
+#1. na처리 : 전체 적용 apply 
+library(stringr)
+f1 <- function(x) {
+ if (x=='-' | x== '?' | x== '.' ) { # x%in% c('?', '.', '-')
+   return(0)
+   } else { 
+   return(x)
+   }
+  } 
+  
+#원소로 함수가 잘 돌아가는지 테스트
+f1('-')  
+f1(2222)  
+
+df1[,]<-apply(df1, c(1,2), f1) 
+sapply(df1,f1) #사용불가 f1 함수가 벡터연산 불가 
+
+
+str_replace_all('a.?b-', '[.?-]', '0')
+str_replace_all(df1, '[.-?-]', '0')
+apply(df1, c(1,2) , str_replace_all, '[.?-]', '0') 
+  
+#2. 천단위 구분기호 제거 및 숫자 변경 : 전체 적용 apply 
+f2 <- function(x) {
+as.numeric(str_remove_all(x, ','))
+} 
+apply(df1, c(1,2), f2) 
+df1[,] <- sapply(df1, f2) #함수가 벡터연산이 잘 되는 표현식에만 가능함 
+str(df1)
+df1
+#3. 년도와 분기 분리 : 벡터적용 sapply
+v_year <- substr(colnames(df1),2,5)
+v_qt <-substr(colnames(df1),7,7)
+v_qt == '1'
+
+str_split(colnames(df1), '\\.')[[1]][1] # . 은 정규식 표현식이기 때문에 일반문자열 처리 \\ 
+
+f3 <- function(x, ord) {
+str_remove(str_split(x , '\\.')[[1]][ord], 'X') 
+} 
+
+v_year<-sapply(colnames(df1), f3, 1) 
+v_qt<-sapply(colnames(df1), f3, 2) 
+
+rbind(df1, v_qt) 
+#문제 각 지점의 1분기 매출의 총합 
+
+#만들어진 변수로 컬럼방향 색인 
+df1[ , v_qt=='1']
+
+#컬럼이름으로 컬럼방향 색인
+str_detect(colnames(df1), '1$') 
+df1 [ , str_detect(colnames(df1), '1$') ] 
+
+apply(df1[ , v_qt=='1'], 1, sum) 
+
+#doby 패키지 : 주로 그룹에 대한 연산을 도와주는 함수 포함 
+install.packages('doBy')
+library('doBy') 
+
+#정렬 : 랜더 샘플링의 데이터 위치값 색인에 필요함 , 파이썬에서도 위치값으로 분석을 시행하기때문에 익숙해져야함 !!
+
+# 1. order ( ..., na.last= , decreasing = F ) # order(데이터(백터들), NA배치순서, 내림차순 정렬 여부) 
+#데이터는 벡터형식만 가능 
+#출력값은 정렬된 벡터가 아닌 위치값
+#위치값을 사용한 색인을 통해서만 순서대로 배치된 벡터 출력 가능 
+
+v1 <- c(10,1,3,2,9,5)
+order(v1) # 출력결과는 위치값이 리턴됨 2 4 3 6 5 1 (1의 위치값=2, 2의위치값=4, 3의위치값=3 ...) 
+v1[order(v1)] #출력결과의 색인을 통해야 원본의 정렬된 값을 얻음 1  2  3  5  9 10
+help(order)
+
+df1 
+df1 [order(df1[,1]), ] #df1의 첫번째컬럼 X2007.1의 행을 오름차순으로 정렬 시킴 --나머지 컬럼은 X2007.1이 기준이 되어 이동함  
+# 컬럼정렬 위치값을 통해 데이터 프레임 정렬 가능 
+
+# 2. sort (x, decreasing = F) sort(데이터(백터1개), 내림차순정렬여부) 
+#데이터는 벡터 형식만 가능 
+sort(v1) #정렬된 결과가 바로 나옴  1  2  3  5  9 10
+
+sort(df1[,1]) #컬럼값이 바로 출력되서 데이터프레임 정렬로 사용 불가 
+
+#연습문제
+#1. emp.csv 파일을 읽고 연봉이 큰 순서대로 정렬하여 출력
+emp <- read.csv("emp.csv", stringsAsFactors =F) 
+emp 
+emp[order(emp$SAL, decreasing = T), ]  
+
+#선생님
+v_ord <- order(emp$SAL, decreasing = T) # 행 위치 순서
+emp[v_ord, ] #행 순서 emp$SAL 값대로 
+
+#2. 부서번호 순으로 정렬 ( 2차 정렬 문제) 
+#단, 같은 부서내에서는 연봉이 큰 순서대로 정렬하여 출력
+
+order(emp$DEPTNO, emp$SAL)  
+emp[order(emp$DEPTNO, emp$SAL, decreasing = F) , ] #둘다 오름차순
+emp[order(emp$DEPTNO, emp$SAL, decreasing = T) , ] #둘다 내림차순 
+emp[order(emp$DEPTNO, emp$SAL, decreasing = c(F,T)), ] #DEPTNO는 오름차순, SAL은 내림차순 
+
+#order명령문의 불편을 해소하기 위한 외부패키지 
+# 1. doBy :: orderBy **중요 
+orderBy(formula = , data = ) #formula= Y(종속변수) ~ x1 + x2 ...,-xn(설명변수, + : 오름차순, - : 내림차순), data=데이터(데이터프레임)
+
+orderBy( ~ DEPTNO - SAL, data = emp) # - : 내림차순 
+orderBy( ~ DEPTNO + SAL, data = emp) # + : 오름차순 
+orderBy( SAL ~ HIREDATE, data = emp) # SAL과 HIREDATE가 기준이 되어 정렬 
+orderBy(  ~ HIREDATE, data = emp) #HIREDATE가 기준이 되어 정렬 
+emp 
+
+#연습문제 
+#student.csv 파일을 읽고 남, 여 순서대로 데이터를 정렬하고 같은 성별내에서는 키가 높은순 
+std <- read.csv("student.csv", stringsAsFactors = F) 
+std
+
+std$gender<-ifelse (str_sub(std$JUMIN,7,7) == '1', '남', '여')
+v_ord <- order(std$gender, std$HEIGHT, decreasing = c(F,T))
+std[v_ord, ]
+
+orderBy( ~ gender - HEIGHT, data =std) 
+
+#선생님
+std$GD <- ifelse(substr(std$JUMIN, 7,7)=='1', '남자', '여자')
+v_ord <- order(std$GD, std$HEIGHT, decreasing = c(F,T))
+std[v_ord, ]
+orderBy( ~ GD -HEIGHT, data=std) 
+
+
+
+# sampling : 데이터 분석시 필요
+# 주로 raw data 70%를 train data(모델 데이터 생성에 필요한 데이터 셋) 
+# 30%를 test data (모델 평가에 필요한 데이터 셋) 으로 분리하여 사용 
+# train과 test를 구분하는 이유는 R에서 데이터를 기억해서 새로 짠 모델의 데이터 셋보다 기존의 데이터 셋을  그대로 사용하려함 
+
+#1.sample (x, size = , replace = , prob = ) (x= 데이터, size = 추출할 샘플 사이즈, replace = 복원추출여부, prob = 추출 확률) 
+#주로 row number에 해당하는 숫자를 사용하여 추출, 데이터 분리
+#반대 data set 추출이 용이함(train 추출 후 test 추출이 쉬움)
+#class별 정확한 균등 추출 불가(비교적 균등)
+
+#설명 : 1) 이탈 10명, 비이탈90명  2)이탈40명, 비이탈60명의 구성이면 2번데이터의 구성이 데이터분석의 신뢰도가 높음, 이유는 두 집단의 샘플이 모집단을 대표할만한 표본이기 때문 
+# 1)의 데이터의 경우는 이탈을 upsampling하여 이탈 샘플의 규모를 키워야함 혹은 비이탈을 downsampling하여 이탈자와의 샘플 규모를 맞춰야함  
+
+iris
+
+#예제 
+0.7*150
+sample(1:150, size = 1) #1~150까지의 벡터에서 1개가 랜덤하게 추출됨 
+sample(c(1,2,3,10,11,16), size =1) #c(~) 벡터에서 1개가 랜덤하게 추출됨 
+sample(1:150, size = 0.7*150) #1~150까지의 벡터에서 0.7*150 개수가 랜덤하게 추출됨 
+sample(1:2, size = 150, replace = T, prob= c(0.7, 0.3)) #1~2의 백터에서 랜덤하게 150까지를 복원 추출하는데 1은 70%의 비율로, 2는 30%의 비율로 포함되게
+sample((1:150) , size= 10) 
+help(sample)
+
+#예제 iris 데이터를 랜덤하게 70%. 30% 두 그룹으로 분리 
+#1) row number : sample size 개수가 정확하게 70% 나옴 : 균등 추출  
+#70%의 데이터 뽑은 것 
+v_rn <- sample((1:nrow(iris)), size =nrow(iris)*0.7) #랜덤하게 iris의 행을 추출함 
+iris_train <- iris[v_rn, ]  #추출한 행 번호의 데이터 확인, 70% 데이터 추출  
+#30%의 데이터 뽑아야함 (하지만, 앞의 70%데이터와 중복되면 안됨, 데이터가 중복되면 예측력 떨어짐 )
+iris_test<-iris[-v_rn,] # 앞의 70% 데이터와 중복된 행 제외한 값 뽑음 
+iris_test
+nrow(iris_train) #105건
+nrow(iris_test) #45건 
+
+#class별 균등 추출 여부 확인 
+table(iris_train$Species) #품종 그룹별 빈도수 #105건 
+table(iris_test$Species) #45건 
+
+#2) group number : 보통 sample size 개수가 비교적 70%와 비슷하게 : 비교적 균등 추출 
+v_gn <-sample(1:2, size= nrow(iris), replace = T, prob =c(0.7,0.3)) #data 각 행의 그룹넘버, prob가 1이 70%확률로, 2가 30%확률로 샘플이 추출됨, 비율이 아님!! 
+iris_train2<- iris[v_gn ==1, ] #v_gn이 iris 데이터의 행의 개수와 같기 때문에 iris 데이터에게 색인 가능 
+iris_test2 <- iris[v_gn ==2, ] 
+
+nrow(iris_train2) #107건 (달라질 수 있음, 랜덤임) 
+nrow(iris_test2)  #43건  (달라질 수 있음, 랜덤임) 
+
+#class별 균등 추출 여부 확인 
+table(iris_train2$Species) #33건 35건 39건 
+table(iris_test2$Species) #17건 15건 11건 
+
+#2. doBy : sampleBy  (formula = , frac = , replace = ) **중요
+#formula : ~ 균등 추출이 필요한 컬럼, frac : 추출비율, replace: 복원추출 여부, data : 원본데이터
+#데이터에서 직접 frac에 해당하는 row를 랜덤 추출
+#row number 추출을 통한 추가 색인 불필요
+#class별 정확한 균등 추출 가능
+#반대 data set 추출이 불편함 
+
+library(doBy)
+iris_train3 <- sampleBy( ~ Species, data = iris, frac = 0.7) 
+
+nrow(iris_train3) #정확한 70%의 sample size, 105건 
+table(iris_train3$Species) #정확한 균등 추출 35건 35건 35건 
+
+#연습문제 
+#sampleBy함수를 사용하여 iris data를 각각 70%, 30%로 분리 
+
+help(sampleBy) 
+
+f1 <- function(x, y) {
+for( i in x) {
+if (i %in% y) {
+next 
+}
+return(i)   
+}
+}
+
+!iris %in% iris_train
+
+sapply( iris, iris_train3,  f1)  
+
+sapply(iris, f1) 
+
+ **선생님 
+library(stringr)
+f_split <- function(x) {
+  as.numeric(str_split(x, '\\.')[[1]][2])  
+ } 
+ 
+ v_rn3 <- sapply(rownames(iris_train3), f_split) 
+ str(v_rn3) 
+ iris_test3 <- iris[-v_rn3, ] 
+ nrow(iris_test3) #45개
+ table(iris_test3$Species) #15개 
+ 
+ #2) v_rn3을 끌어내는 다른 방법 
+ v_rn4 <-as.numeric(str_remove_all(rownames(iris_train3), '\\D')) 
+ 
+
+# 3. doBy :: summaryBy 
+# 각 컬럼 요약 값 얻기
+# 1. summary 
+# 숫자컬럼은 최대, 최소 각 분위값 등 출력
+# 문자컬럼은 각 항목별 count 
+
+iris
+
+summary(iris) #길이, 넓이, 등등의 최대,최소, 미디안, 평균, quant 의 값 
+
+summaryBy(formula = , data =) #formula = 요약컬럼 ~ 그룹컬럼, data = 데이터(데이터프레임) 
+
+
+# 2. summaryBy(formula =, data= ) # formula = 요약컬럼 ~ 그룹컬럼, data=데이터(데이터프레임) 
+#전체 컬럼을 특정 그룹으로 나눠서 요약
+# summary 처럼 많은 요약 정보를 한번에 볼 수 있음  
+
+summaryBy(Sepal.Length ~ Species, data = iris) #종류별 길이의 mean값 
+summaryBy(Sepal.Length ~ Species, data = iris, FUN=max) #종류별 길이의 max 깂 
+summaryBy(Sepal.Length + Sepal.Width ~ Species, data = iris, FUN=max) #종류별 길이, 넓이의 max값  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

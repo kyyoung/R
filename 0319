@@ -1,0 +1,185 @@
+#merge : 두  데이터 프레임의 조인 
+# inner join이 기본연산(조인연산에 맞지 않는 데이터 생략) 
+# 단 두개의 데이터프레임만 조인 가능
+# non equi join 불가 
+# 조인컬럼이 여러개일 경우 벡터로 묶어서 전달 
+
+#merge(x,   조인대상 
+#      y,   조인대상 
+#	   by = intersect(names(x), names(y)),   조인 컬럼 
+#      by.x = by, 첫번째 데이터 프레임의 조인 컬럼
+#      by.y = by, 두번째 데이터 프레임의 조인 컬럼
+#      all = FALSE, full outer join 여부
+#      all.x = all, left outer join 여부 
+#	   all.y = all, right outer join 여부 
+#      sort = TRUE, suffixes = c(".x",".y"), no.dups = TRUE,
+#      incomparables = NULL, ...)
+setwd("C:/Users/KITCOOP/Documents/R/data")
+std <- read.csv('student.csv', stringsAsFactors = F)
+pro <- read.csv('professor.csv', stringsAsFactors = F) 
+
+#예제 - 학생 데이터에 지도교수 이름 추가 
+
+# 1) merge 
+merge(std, pro, by ='PROFNO', all.x = T) #모든 학생 데이터가 출력되야되기 때문에 x인 std 데이터 = T 
+
+# 2) 사용자 정의함수 생성을 통한 조인 
+f_merge <- function( x, y, a, b,c){
+merge( x, y, by=c, by.x=a, by.y=b, all=T ) 
+} 
+sapply(std, f_merge, pro, std$PROFNO) 
+
+
+#선생님 
+v_prof <- std[std$STUDNO == 9411, 'PROFNO'] 
+pro[pro$PROFNO == v_prof, 'NAME'] 
+
+f_name <- function(x) {
+v_prof <- std[std$STUDNO ==x, 'PROFNO']
+if(is.na(v_prof)) {
+return(NA)
+} else {  
+pro[pro$PROFNO == v_prof, 'NAME']
+} 
+} 
+
+sapply(std$STUDNO, f_name) 
+
+#예제) emp.csv 파일을 읽고 각 직원의 상위관리자 이름 출력 
+emp <- read.csv('emp.csv', stringsAsFactors= F)
+merge(emp, emp, by.x ='MGR', by.y ='EMPNO', all.x =T) 
+
+#연습문제
+#gogak.csv, gift.csv 테이블 데이터를 데이터베이스로부터 불러온 후 각 직원의 수령상품을 출력(조인은 R 문법)  
+read.csv('gogak.csv') 
+library(RJDBC)
+jdbcDriver <- JDBC(driverClass = "oracle.jdbc.OracleDriver", classPath = "C:/app/KITCOOP/product/11.2.0/client_1/ojdbc6.jar")
+con <- dbConnect(jdbcDriver, "jdbc:oracle:thin:@192.168.0.108:1523:orcl", "scott", "oracle")
+
+q1<-'select * from gogak'  
+dbGetQuery(con, q1) 
+dbGetQuery(con, 'select * from gogak' ) 
+
+q2<-'select * from gift' 
+dbGetQuery(con, q2)
+
+q3<-'select * from gogak g1, gift g2 where g1.point(+) <= g2.g_end' 
+dbGetQuery(con, q3) 
+
+merge(gogak, gift, by.x='POINT', by.y='G_END', all.x=T)
+
+#선생님
+library(RJDBC)
+
+#get_query는 func1 바이너리 파일에 저장된 사용자 정의 함수임 
+
+get_query<-function(x){ 
+ jdbcDriver <- JDBC(driverClass = "oracle.jdbc.OracleDriver", classPath = "C:/app/KITCOOP/product/11.2.0/client_1/ojdbc6.jar")
+ con <- dbConnect(jdbcDriver, "jdbc:oracle:thin:@192.168.0.108:1523:orcl", "scott", "oracle")
+ dbGetQuery(con, x) 
+ } 
+
+
+
+save(get_query, file = 'func1') 
+
+load('func1') 
+gogak <- get_query('select * from gogak')
+str(gogak) 
+gift <- get_query('select * from gift') 
+v_point <- gogak[gogak$GNO ==20010001, 'POINT'] 
+gift[(gift$G_START <= v_point) & (v_point<= gift$G_END), 'GNAME']
+
+f_gift <- function(x) {
+v_point <- gogak[gogak$GNO ==x, 'POINT'] 
+gift[(gift$G_START <= v_point) & (v_point<= gift$G_END), 'GNAME']
+}
+
+f_gift(20010020) 
+sapply(gogak$GNO, f_gift) 
+
+
+#최대값 최소값 리턴 
+max(emp$SAL) #벡터의 최대값 직접 리턴 
+
+#예제 emp.csv 파일에서 최대 연봉자의 이름 출력 
+emp[emp$SAL == max(emp$SAL), 'ENAME'] 
+emp[which.max(emp$SAL), 'ENAME'] 
+
+#aggregate
+#group by 연산 수행
+#출력 결과 데이터 프레임
+#문법이 두가지 존재
+
+aggregate(x, by, FUN) # x= 연산대상, by= group by 컬럼(리스트전달), FUN=적용함수
+aggregate(formual, data, FUN) # formual=연산컬럼 ~group by컬럼, data=데이터프레임, FUN=적용함수 ) 
+
+#연산대상 1개 group by 컬럼 1개
+#예제 emp 테이블에서의 부서번호별 연봉 평균
+aggregate(emp$SAL, list(emp$DEPTNO), FUN= mean) 
+aggregate(SAL ~DEPTNO, data= emp, FUN = mean) 
+as.data.frame(tapply(emp$SAL, emp$DEPTNO, mean)) 
+
+#연산대상 2개 group by 컬럼 1개 시험 문제 
+#예제 student 테이블에서 학년별 키, 몸무게 평균 
+aggregate(std[,c('HEIGHT', 'WEIGHT')], by=list(std$GRADE), FUN= mean)  
+aggregate(HEIGHT + WEIGHT ~ GRADE, data= std, FUN = mean) # +가 컬럼 추가로 해석되지 않고 두개 합쳐서 평균냄 
+aggregate(cbind(HEIGHT, WEIGHT) ~ GRADE, data= std, FUN = mean) #키와 몸무게 각각 평균이 구해짐
+
+#연산대상 1개, group by 컬럼 2개 
+#emp 테이블에서 부서별 job별 sal의 평균
+aggregate(emp$SAL, by=list(emp$DEPTNO, emp$JOB), FUN=mean) 
+aggregate(SAL~DEPTNO + JOB, data=emp, FUN= mean) 
+
+#연습문제
+#student.csv 파일과 exam_01.csv 파일을 읽고
+std<-read.csv("student.csv", stringsAsFactors =F) 
+exam<-read.csv("exam_01.csv", stringsAsFactors =F) 
+
+#1. 각 학년별 시험성적의 평균을 구하시오
+std[std$STUDNO == , 'GRADE']
+exam[exam$STUDNO == , 'TOTAL']  
+exam
+#function 이용해서 merge
+f1 <- function(x) {
+std_v <- std[std$GRADE ==x , 'STUDNO']
+exam[exam$STUDNO==std_v , 'TOTAL'] 
+}
+std$TOTAL<-f1(std$GRADE) 
+
+#merge 사용 
+df1<-merge(std, exam, by ='STUDNO', all.x = T) #모든 학생 데이터가 출력되야되기 때문에 x인 std 데이터 = T 
+aggregate(df1$TOTAL, list(df1$GRADE), FUN = mean)
+
+
+#선생님 
+std2<-merge(std, exam, by ='STUDNO') #전체조인 
+tapply(std2$TOTAL, std2$GRADE, mean) 
+aggregate(std2$TOTAL, by=list(std2$GRADE), FUN=mean) 
+aggregate(TOTAL~GRADE, data=std2, FUN = mean) 
+
+#2. 각 학년별 최고성적을 갖는 학생 이름, 성적, 학년 출력 
+
+aggregate(df1[ ,c('TOTAL', 'NAME')], by=list(df1$GRADE), FUN= max)  #이름이 제대로 출력되지 않음 
+std
+
+#선생님 
+df_max <- aggregate(TOTAL ~ GRADE, data=std2, FUN= max) 
+df_std <- merge(std2, df_max, by =c('GRADE','TOTAL')) 
+df_std[ , c('NAME', 'TOTAL', 'GRADE')] 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
